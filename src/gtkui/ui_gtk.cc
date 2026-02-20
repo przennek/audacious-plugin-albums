@@ -976,7 +976,32 @@ bool GtkUI::init ()
     vbox = audgui_vbox_new (6);
     layout_add_center (vbox);
 
-    gtk_box_pack_start ((GtkBox *) vbox, pl_notebook_new (), true, true, 0);
+    // Create a notebook to hold both playlist and album browser tabs
+    GtkWidget * main_notebook = gtk_notebook_new ();
+    gtk_notebook_set_show_border ((GtkNotebook *) main_notebook, false);
+    
+    // Add playlist tab - pl_notebook_new() sets the global pl_notebook variable
+    GtkWidget * pl_widget = pl_notebook_new ();
+    GtkWidget * pl_label = gtk_label_new ("Playlists");
+    gtk_notebook_append_page ((GtkNotebook *) main_notebook, pl_widget, pl_label);
+    
+    // Always add album browser tab (will be empty if plugin not enabled)
+    PluginHandle * album_browser_plugin = aud_plugin_lookup_basename ("album-browser");
+    if (album_browser_plugin)
+    {
+        // Force enable the plugin if it exists
+        if (!aud_plugin_get_enabled (album_browser_plugin))
+            aud_plugin_enable (album_browser_plugin, true);
+            
+        GtkWidget * album_widget = (GtkWidget *) aud_plugin_get_gtk_widget (album_browser_plugin);
+        if (album_widget)
+        {
+            GtkWidget * album_label = gtk_label_new ("Albums");
+            gtk_notebook_append_page ((GtkNotebook *) main_notebook, album_widget, album_label);
+        }
+    }
+    
+    gtk_box_pack_start ((GtkBox *) vbox, main_notebook, true, true, 0);
 
     /* optional UI elements */
     show_hide_menu ();

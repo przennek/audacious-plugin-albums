@@ -121,6 +121,7 @@ endif
 
 # GTK-specific plugins
 if conf.has('USE_GTK')
+  subdir('album-browser')
   subdir('albumart')
   subdir('blur_scope')
   subdir('filebrowser')
