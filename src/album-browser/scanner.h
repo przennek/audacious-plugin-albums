@@ -44,6 +44,7 @@ private:
     bool contains_audio_files(const std::string& path);
     Album create_album_from_directory(const std::string& path);
     std::string find_cover_art(const std::string& path);
+    std::string extract_embedded_art(const std::string& audio_file);
     
     std::atomic<bool> scanning_;
     std::atomic<bool> cancel_requested_;

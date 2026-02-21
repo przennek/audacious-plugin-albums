@@ -976,16 +976,15 @@ bool GtkUI::init ()
     vbox = audgui_vbox_new (6);
     layout_add_center (vbox);
 
-    // Create a notebook to hold both playlist and album browser tabs
-    GtkWidget * main_notebook = gtk_notebook_new ();
-    gtk_notebook_set_show_border ((GtkNotebook *) main_notebook, false);
+    // Create a horizontal paned widget to hold playlist and album browser side by side
+    GtkWidget * main_paned = gtk_paned_new (GTK_ORIENTATION_HORIZONTAL);
+    gtk_paned_set_wide_handle ((GtkPaned *) main_paned, true);
     
-    // Add playlist tab - pl_notebook_new() sets the global pl_notebook variable
+    // Add playlist on the left side
     GtkWidget * pl_widget = pl_notebook_new ();
-    GtkWidget * pl_label = gtk_label_new ("Playlists");
-    gtk_notebook_append_page ((GtkNotebook *) main_notebook, pl_widget, pl_label);
+    gtk_paned_pack1 ((GtkPaned *) main_paned, pl_widget, true, false);
     
-    // Always add album browser tab (will be empty if plugin not enabled)
+    // Add album browser on the right side (will be empty if plugin not enabled)
     PluginHandle * album_browser_plugin = aud_plugin_lookup_basename ("album-browser");
     if (album_browser_plugin)
     {
@@ -996,12 +995,13 @@ bool GtkUI::init ()
         GtkWidget * album_widget = (GtkWidget *) aud_plugin_get_gtk_widget (album_browser_plugin);
         if (album_widget)
         {
-            GtkWidget * album_label = gtk_label_new ("Albums");
-            gtk_notebook_append_page ((GtkNotebook *) main_notebook, album_widget, album_label);
+            gtk_paned_pack2 ((GtkPaned *) main_paned, album_widget, true, false);
+            // Set initial position: 50% split
+            gtk_paned_set_position ((GtkPaned *) main_paned, 400);
         }
     }
     
-    gtk_box_pack_start ((GtkBox *) vbox, main_notebook, true, true, 0);
+    gtk_box_pack_start ((GtkBox *) vbox, main_paned, true, true, 0);
 
     /* optional UI elements */
     show_hide_menu ();
