@@ -1,0 +1,32 @@
+# Maintainer: Your Name <your.email@example.com>
+pkgname=audacious-plugin-album-browser
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Album browser plugin for Audacious with grid view and cover art"
+arch=('x86_64' 'aarch64')
+url="https://github.com/przennek/audacious-plugin-albums"
+license=('BSD')
+depends=('audacious>=4.0' 'gtk3' 'taglib')
+makedepends=('git' 'pkg-config')
+source=("git+https://github.com/przennek/audacious-plugin-albums.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/audacious-plugin-albums"
+  git describe --long --tags 2>/dev/null | sed 's/\([^-]*-g\)/r\1/;s/-/./g' || echo "$pkgver"
+}
+
+build() {
+  cd "$srcdir/audacious-plugin-albums/src/album-browser"
+  make -f Makefile.standalone
+}
+
+package() {
+  cd "$srcdir/audacious-plugin-albums/src/album-browser"
+  
+  # Install plugin
+  install -Dm755 album-browser.so "$pkgdir/usr/lib/audacious/General/album-browser.so"
+  
+  # Install documentation
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+}
