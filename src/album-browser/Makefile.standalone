@@ -13,6 +13,7 @@ OBJECTS = $(SOURCES:.cc=.o)
 
 # Compiler
 CXX = g++
+MOC = /usr/lib/qt6/moc
 
 # Common flags
 CXXFLAGS = -std=c++17 -fPIC -Wall -O2 -DPACKAGE=\"audacious-plugins\" -DEXPORT=
@@ -21,37 +22,43 @@ LDFLAGS = -shared
 # Platform-specific settings
 ifeq ($(UNAME_S),Linux)
     # Linux
-    CXXFLAGS += $(shell pkg-config --cflags audacious gtk+-3.0 taglib)
-    LDFLAGS += $(shell pkg-config --libs audacious gtk+-3.0 taglib)
-    INSTALL_DIR = $(HOME)/.local/lib/audacious/General
+    CXXFLAGS += $(shell pkg-config --cflags audacious Qt6Core Qt6Widgets Qt6Gui taglib) -fPIC
+    LDFLAGS += $(shell pkg-config --libs audacious Qt6Core Qt6Widgets Qt6Gui taglib)
+    INSTALL_DIR = /usr/lib/audacious/General
 else ifeq ($(UNAME_S),Darwin)
     # macOS
     PLUGIN = album-browser.dylib
-    CXXFLAGS += $(shell pkg-config --cflags audacious gtk+-3.0 taglib)
+    CXXFLAGS += $(shell pkg-config --cflags audacious Qt6Core Qt6Widgets Qt6Gui taglib) -fPIC
     LDFLAGS = -dynamiclib -undefined dynamic_lookup
-    LDFLAGS += $(shell pkg-config --libs audacious gtk+-3.0 taglib)
+    LDFLAGS += $(shell pkg-config --libs audacious Qt6Core Qt6Widgets Qt6Gui taglib)
     INSTALL_DIR = $(HOME)/Library/Application Support/Audacious/Plugins
 endif
 
 # Targets
 all: $(PLUGIN)
 
-$(PLUGIN): $(OBJECTS)
-	$(CXX) $(LDFLAGS) -o $@ $^
+album-browser.moc: album-browser.cc
+	$(MOC) album-browser.cc -o album-browser.moc
+
+album-browser.o: album-browser.cc album-browser.moc
+	$(CXX) $(CXXFLAGS) -c album-browser.cc -o album-browser.o
 
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+$(PLUGIN): $(OBJECTS)
+	$(CXX) $(LDFLAGS) -o $@ $(OBJECTS)
+
 clean:
-	rm -f $(OBJECTS) $(PLUGIN)
+	rm -f $(OBJECTS) $(PLUGIN) album-browser.moc
 
 install: $(PLUGIN)
 	mkdir -p "$(INSTALL_DIR)"
-	cp $(PLUGIN) "$(INSTALL_DIR)/"
+	sudo cp $(PLUGIN) "$(INSTALL_DIR)/"
 	@echo "Installed to $(INSTALL_DIR)/$(PLUGIN)"
 
 uninstall:
-	rm -f "$(INSTALL_DIR)/$(PLUGIN)"
+	sudo rm -f "$(INSTALL_DIR)/$(PLUGIN)"
 	@echo "Uninstalled from $(INSTALL_DIR)/$(PLUGIN)"
 
 .PHONY: all clean install uninstall
